@@ -90,6 +90,31 @@ describe('Customers', () => {
     });
   });
 
+  test('create with invalid data', async () => {
+    const res = await mutate({
+      mutation: ADD_CUSTOMER,
+      variables: {
+        customer: {
+          email: 'foo.bar@example',
+          firstname: 'f',
+          lastname: 'b',
+        },
+      },
+    });
+
+    expect({
+      code: res.errors[0].extensions.code,
+      validationErrors: res.errors[0].extensions.validationErrors,
+    }).toEqual({
+      code: 'BAD_USER_INPUT',
+      validationErrors: {
+        email: '"email" must be a valid email',
+        firstname: '"firstname" length must be at least 2 characters long',
+        lastname: '"lastname" length must be at least 2 characters long',
+      },
+    });
+  });
+
   test('update', async () => {
     const res = await mutate({
       mutation: UPDATE_CUSTOMER,
@@ -109,6 +134,32 @@ describe('Customers', () => {
         email: 'june.dore@example.com',
         firstname: 'june',
         lastname: 'dore',
+      },
+    });
+  });
+
+  test('update with invalid data', async () => {
+    const res = await mutate({
+      mutation: UPDATE_CUSTOMER,
+      variables: {
+        id: '945641cc-f972-4bdc-b7b4-ad449739c0e9',
+        customer: {
+          email: 'june.dore@example',
+          firstname: 'j',
+          lastname: 'd',
+        },
+      },
+    });
+
+    expect({
+      code: res.errors[0].extensions.code,
+      validationErrors: res.errors[0].extensions.validationErrors,
+    }).toEqual({
+      code: 'BAD_USER_INPUT',
+      validationErrors: {
+        email: '"email" must be a valid email',
+        firstname: '"firstname" length must be at least 2 characters long',
+        lastname: '"lastname" length must be at least 2 characters long',
       },
     });
   });

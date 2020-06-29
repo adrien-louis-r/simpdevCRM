@@ -40,4 +40,9 @@ async function update(id, payload) {
   return rows[0];
 }
 
-module.exports = { all, find, create, update };
+module.exports = {
+  all,
+  find,
+  create,
+  update,
+};
