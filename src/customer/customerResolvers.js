@@ -1,9 +1,13 @@
-const customers = require('./customerModel');
+const customerRepository = require('./customerRepository');
 
 const resolvers = {
   Query: {
-    customerList: () => customers.all(),
-    customer: (_, { id }) => customers.find(id),
+    customerList: () => customerRepository.all(),
+    customer: (_, { id }) => customerRepository.find(id),
+  },
+  Mutation: {
+    addCustomer: (_, { customer }) => customerRepository.create(customer),
+    updateCustomer: (_, { id, customer }) => customerRepository.update(id, customer),
   },
 };
 
