@@ -23,7 +23,7 @@ module.exports = {
       database: 'crm',
     },
     seeds: {
-      directory: './db/seeds',
+      directory: './db/dev-seeds',
     },
     migrations: {
       directory: './db/migrations',
