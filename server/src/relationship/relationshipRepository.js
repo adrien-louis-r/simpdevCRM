@@ -35,10 +35,15 @@ async function update(id, payload) {
     })
     .returning('*');
 
+  if (!rows[0]) {
+    throw new NoSuchEntity();
+  }
+
   return rows[0];
 }
 
 async function remove(id) {
+  await get(id);
   const result = await db('relationships').where('id', id).delete();
   return Boolean(result);
 }

@@ -43,12 +43,17 @@ async function update(id, payload) {
     })
     .returning('*');
 
+  if (!rows[0]) {
+    throw new NoSuchEntity();
+  }
+
   return rows[0];
 }
 
 async function remove(id) {
-  await db('contacts').where('id', id).delete();
-  return true;
+  await get(id);
+  const result = await db('contacts').where('id', id).delete();
+  return Boolean(result);
 }
 
 module.exports = {

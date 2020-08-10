@@ -40,6 +40,7 @@ async function createContact(payload) {
 }
 
 async function updateContact(id, payload) {
+  guardAgainstInvalidId(id);
   const value = await contactValidator.validateAsync(payload, {
     abortEarly: false,
   });
@@ -48,6 +49,7 @@ async function updateContact(id, payload) {
 }
 
 async function removeContact(id) {
+  guardAgainstInvalidId(id);
   await joi.string().guid().validate(id);
   return contactRepository.remove(id);
 }
@@ -70,6 +72,7 @@ async function createRelationship(payload) {
 }
 
 async function updateRelationship(id, payload) {
+  guardAgainstInvalidId(id);
   const value = await relationshipValidator.validateAsync(payload, {
     abortEarly: false,
   });
@@ -78,6 +81,7 @@ async function updateRelationship(id, payload) {
 }
 
 async function removeRelationship(id) {
+  guardAgainstInvalidId(id);
   await joi.string().guid().validateAsync(id);
   return relationshipRepository.remove(id);
 }

@@ -1,92 +1,16 @@
 const { createTestClient } = require('apollo-server-testing');
-const { gql } = require('apollo-server');
 const knexCleaner = require('knex-cleaner');
 const server = require('../src/makeApolloServer');
 const db = require('../src/db');
+const {
+  GET_RELATIONSHIP,
+  GET_RELATIONSHIP_LIST,
+  ADD_RELATIONSHIP,
+  UPDATE_RELATIONSHIP,
+  REMOVE_RELATIONSHIP,
+} = require('./__queries__/relationships');
 
 const MOCK_UUID_VALUE = '36c66dc4-7fa6-42dc-9b34-85b1a4d5b127';
-
-const NOT_FOUND_FRAGMENT = gql`
-  fragment NotFoundMessage on NotFoundEntity {
-    message
-  }
-`;
-
-const INVALID_PARAM_FRAGMENT = gql`
-  fragment InvalidParamMessage on InvalidParam {
-    message
-  }
-`;
-
-const BAD_USER_INPUT_FRAGMENT = gql`
-  fragment BadUserInput on BadUserInput {
-    errors {
-      field
-      message
-    }
-  }
-`;
-
-const RELATIONSHIP_FRAGMENT = gql`
-  fragment RelationshipData on Relationship {
-    id
-    name
-    type
-  }
-`;
-
-const GET_RELATIONSHIP_LIST = gql`
-  {
-    relationshipList {
-      ...RelationshipData
-    }
-  }
-  ${RELATIONSHIP_FRAGMENT}
-`;
-
-const GET_RELATIONSHIP = gql`
-  query relationship($id: ID!) {
-    relationship(id: $id) {
-      ...RelationshipData
-      ...NotFoundMessage
-      ...InvalidParamMessage
-    }
-  }
-  ${RELATIONSHIP_FRAGMENT}
-  ${NOT_FOUND_FRAGMENT}
-  ${INVALID_PARAM_FRAGMENT}
-`;
-
-const ADD_RELATIONSHIP = gql`
-  mutation addRelationship($relationship: RelationshipInput!) {
-    addRelationship(relationship: $relationship) {
-      ...RelationshipData
-      ...BadUserInput
-    }
-  }
-  ${RELATIONSHIP_FRAGMENT}
-  ${BAD_USER_INPUT_FRAGMENT}
-`;
-
-const UPDATE_RELATIONSHIP = gql`
-  mutation updateRelationship($id: ID!, $relationship: RelationshipInput!) {
-    updateRelationship(id: $id, relationship: $relationship) {
-      ...RelationshipData
-      ...BadUserInput
-    }
-  }
-  ${RELATIONSHIP_FRAGMENT}
-  ${BAD_USER_INPUT_FRAGMENT}
-`;
-
-const REMOVE_RELATIONSHIP = gql`
-  mutation removeRelationship($id: ID!) {
-    removeRelationship(id: $id) {
-      id
-      success
-    }
-  }
-`;
 
 jest.mock('uuid', () => ({ v4: () => MOCK_UUID_VALUE }));
 
@@ -170,6 +94,45 @@ describe('Update', () => {
         id: '4d1b5024-e42d-4274-a7c8-d0e979ec9e0e',
         name: 'Promising customer :)',
         type: 'customer',
+      },
+    });
+  });
+
+  test('invalid input', async () => {
+    const res = await mutate({
+      mutation: UPDATE_RELATIONSHIP,
+      variables: {
+        id: 'missing-relationship',
+        relationship: {
+          name: 'Promising customer :)',
+          type: 'customer',
+        },
+      },
+    });
+
+    expect(res.data).toEqual({
+      updateRelationship: {
+        message: 'The relationship with the id "missing-relationship" does not exist.',
+      },
+    });
+  });
+
+  test('no such entity', async () => {
+    const res = await mutate({
+      mutation: UPDATE_RELATIONSHIP,
+      variables: {
+        id: '11111111-2222-3333-4444-555555555555',
+        relationship: {
+          name: 'Promising customer :)',
+          type: 'customer',
+        },
+      },
+    });
+
+    expect(res.data).toEqual({
+      updateRelationship: {
+        message:
+          'The relationship with the id "11111111-2222-3333-4444-555555555555" does not exist.',
       },
     });
   });
@@ -283,6 +246,33 @@ describe('Delete', () => {
       removeRelationship: {
         id: '4d1b5024-e42d-4274-a7c8-d0e979ec9e0e',
         success: true,
+      },
+    });
+  });
+
+  test('invalid input', async () => {
+    const res = await query({
+      query: REMOVE_RELATIONSHIP,
+      variables: { id: 'missing-relationship' },
+    });
+
+    expect(res.data).toEqual({
+      removeRelationship: {
+        message: 'The relationship with the id "missing-relationship" does not exist.',
+      },
+    });
+  });
+
+  test('not such entity', async () => {
+    const res = await query({
+      query: REMOVE_RELATIONSHIP,
+      variables: { id: '11111111-2222-3333-4444-555555555555' },
+    });
+
+    expect(res.data).toEqual({
+      removeRelationship: {
+        message:
+          'The relationship with the id "11111111-2222-3333-4444-555555555555" does not exist.',
       },
     });
   });

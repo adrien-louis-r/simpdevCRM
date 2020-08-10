@@ -1,24 +1,6 @@
 const model = require('./relationshipModel');
 const { NoSuchEntity, InvalidParam } = require('../errors');
 
-function handleMandatoryEntity(err, message) {
-  if (err instanceof NoSuchEntity) {
-    return {
-      __typename: 'NotFoundEntity',
-      message,
-    };
-  }
-
-  if (err instanceof InvalidParam) {
-    return {
-      __typename: 'InvalidParam',
-      message,
-    };
-  }
-
-  throw err;
-}
-
 function formatValidationErrors(err) {
   return err.details.map((detail) => {
     return {
@@ -28,16 +10,55 @@ function formatValidationErrors(err) {
   });
 }
 
-function handleBadUserInput(err) {
-  if (err.name === 'ValidationError') {
-    return {
-      __typename: 'BadUserInput',
-      errors: formatValidationErrors(err),
-    };
+function handleErrors(err, handlers) {
+  const returnValue = handlers.reduce((acc, handler) => {
+    const isHandled = handler(err);
+    if (isHandled) {
+      return isHandled;
+    }
+
+    return acc;
+  }, null);
+
+  if (!returnValue) {
+    throw err;
   }
 
-  throw err;
+  return returnValue;
 }
+
+const handleNoSuchEntity = (err, message) => () => {
+  if (!(err instanceof NoSuchEntity)) {
+    return false;
+  }
+
+  return {
+    __typename: 'NotFoundEntity',
+    message,
+  };
+};
+
+const handleInvalidParam = (err, message) => () => {
+  if (!(err instanceof InvalidParam)) {
+    return false;
+  }
+
+  return {
+    __typename: 'InvalidParam',
+    message,
+  };
+};
+
+const handleBadUserInput = (err) => () => {
+  if (err.name !== 'ValidationError') {
+    return false;
+  }
+
+  return {
+    __typename: 'BadUserInput',
+    errors: formatValidationErrors(err),
+  };
+};
 
 const resolvers = {
   Query: {
@@ -50,7 +71,10 @@ const resolvers = {
           ...relationship,
         };
       } catch (err) {
-        return handleMandatoryEntity(err, `The relationship with the id "${id}" does not exist.`);
+        return handleErrors(err, [
+          handleNoSuchEntity(err, `The relationship with the id "${id}" does not exist.`),
+          handleInvalidParam(err, `The relationship with the id "${id}" does not exist.`),
+        ]);
       }
     },
     contactList: () => model.allContact(),
@@ -62,7 +86,10 @@ const resolvers = {
           ...contact,
         };
       } catch (err) {
-        return handleMandatoryEntity(err, `The contact with the id "${id}" does not exist.`);
+        return handleErrors(err, [
+          handleNoSuchEntity(err, `The contact with the id "${id}" does not exist.`),
+          handleInvalidParam(err, `The contact with the id "${id}" does not exist.`),
+        ]);
       }
     },
   },
@@ -75,7 +102,7 @@ const resolvers = {
           ...result,
         };
       } catch (err) {
-        return handleBadUserInput(err);
+        return handleErrors(err, [handleBadUserInput(err)]);
       }
     },
     updateRelationship: async (_, { id, relationship }) => {
@@ -86,10 +113,28 @@ const resolvers = {
           ...result,
         };
       } catch (err) {
-        return handleBadUserInput(err);
+        return handleErrors(err, [
+          handleNoSuchEntity(err, `The relationship with the id "${id}" does not exist.`),
+          handleInvalidParam(err, `The relationship with the id "${id}" does not exist.`),
+          handleBadUserInput(err),
+        ]);
       }
     },
-    removeRelationship: (_, { id }) => ({ success: model.removeRelationship(id), id }),
+    removeRelationship: async (_, { id }) => {
+      try {
+        const success = await model.removeRelationship(id);
+        return {
+          __typename: 'DeleteResult',
+          id,
+          success,
+        };
+      } catch (err) {
+        return handleErrors(err, [
+          handleNoSuchEntity(err, `The relationship with the id "${id}" does not exist.`),
+          handleInvalidParam(err, `The relationship with the id "${id}" does not exist.`),
+        ]);
+      }
+    },
     addContact: async (_, { contact }) => {
       try {
         const result = await model.createContact(contact);
@@ -98,7 +143,7 @@ const resolvers = {
           ...result,
         };
       } catch (err) {
-        return handleBadUserInput(err);
+        return handleErrors(err, [handleBadUserInput(err)]);
       }
     },
     updateContact: async (_, { id, contact }) => {
@@ -109,10 +154,28 @@ const resolvers = {
           ...result,
         };
       } catch (err) {
-        return handleBadUserInput(err);
+        return handleErrors(err, [
+          handleNoSuchEntity(err, `The contact with the id "${id}" does not exist.`),
+          handleInvalidParam(err, `The contact with the id "${id}" does not exist.`),
+          handleBadUserInput(err),
+        ]);
       }
     },
-    removeContact: (_, { id }) => ({ success: model.removeContact(id), id }),
+    removeContact: async (_, { id }) => {
+      try {
+        const success = await model.removeContact(id);
+        return {
+          __typename: 'DeleteResult',
+          id,
+          success,
+        };
+      } catch (err) {
+        return handleErrors(err, [
+          handleNoSuchEntity(err, `The contact with the id "${id}" does not exist.`),
+          handleInvalidParam(err, `The contact with the id "${id}" does not exist.`),
+        ]);
+      }
+    },
   },
   Relationship: {
     contactList: () => [],

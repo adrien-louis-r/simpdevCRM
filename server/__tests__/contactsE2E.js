@@ -1,105 +1,16 @@
 const { createTestClient } = require('apollo-server-testing');
-const { gql } = require('apollo-server');
 const knexCleaner = require('knex-cleaner');
 const server = require('../src/makeApolloServer');
 const db = require('../src/db');
+const {
+  GET_CONTACT,
+  GET_CONTACT_LIST,
+  ADD_CONTACT,
+  UPDATE_CONTACT,
+  REMOVE_CONTACT,
+} = require('./__queries__/contacts');
 
 const MOCK_UUID_VALUE = '36c66dc4-7fa6-42dc-9b34-85b1a4d5b127';
-
-const NOT_FOUND_FRAGMENT = gql`
-  fragment NotFoundMessage on NotFoundEntity {
-    message
-  }
-`;
-
-const INVALID_PARAM_FRAGMENT = gql`
-  fragment InvalidParamMessage on InvalidParam {
-    message
-  }
-`;
-
-const BAD_USER_INPUT_FRAGMENT = gql`
-  fragment BadUserInput on BadUserInput {
-    errors {
-      field
-      message
-    }
-  }
-`;
-
-const CONTACT_FRAGMENT = gql`
-  fragment ContactData on Contact {
-    id
-    email
-    lastname
-    firstname
-  }
-`;
-
-const CONTACT_RELATIONSHIP_FRAGMENT = gql`
-  fragment ContactRelationshipData on Contact {
-    relationship {
-      id
-    }
-  }
-`;
-
-const GET_CONTACT_LIST = gql`
-  {
-    contactList {
-      ...ContactData
-    }
-  }
-  ${CONTACT_FRAGMENT}
-`;
-
-const GET_CONTACT = gql`
-  query contact($id: ID!) {
-    contact(id: $id) {
-      ...ContactData
-      ...NotFoundMessage
-      ...InvalidParamMessage
-    }
-  }
-  ${CONTACT_FRAGMENT}
-  ${NOT_FOUND_FRAGMENT}
-  ${INVALID_PARAM_FRAGMENT}
-`;
-
-const ADD_CONTACT = gql`
-  mutation addContact($contact: ContactInput!) {
-    addContact(contact: $contact) {
-      ...ContactData
-      ...ContactRelationshipData
-      ...BadUserInput
-    }
-  }
-  ${CONTACT_FRAGMENT}
-  ${CONTACT_RELATIONSHIP_FRAGMENT}
-  ${BAD_USER_INPUT_FRAGMENT}
-`;
-
-const UPDATE_CONTACT = gql`
-  mutation updateContact($id: ID!, $contact: ContactInput!) {
-    updateContact(id: $id, contact: $contact) {
-      ...ContactData
-      ...ContactRelationshipData
-      ...BadUserInput
-    }
-  }
-  ${CONTACT_FRAGMENT}
-  ${CONTACT_RELATIONSHIP_FRAGMENT}
-  ${BAD_USER_INPUT_FRAGMENT}
-`;
-
-const REMOVE_CONTACT = gql`
-  mutation removeContact($id: ID!) {
-    removeContact(id: $id) {
-      id
-      success
-    }
-  }
-`;
 
 jest.mock('uuid', () => ({ v4: () => MOCK_UUID_VALUE }));
 
@@ -138,6 +49,8 @@ describe('Create', () => {
         lastname: 'bar',
         relationship: {
           id: '4d1b5024-e42d-4274-a7c8-d0e979ec9e0e',
+          name: 'Promising contact',
+          type: 'prospect',
         },
       },
     });
@@ -199,6 +112,8 @@ describe('Update', () => {
         lastname: 'dore',
         relationship: {
           id: 'e7ce879c-bfdd-4126-b222-9cd5efdba701',
+          name: 'Friendly freelance',
+          type: 'business',
         },
       },
     });
@@ -233,6 +148,48 @@ describe('Update', () => {
             message: '"lastname" length must be at least 2 characters long',
           },
         ],
+      },
+    });
+  });
+
+  test('invalid input', async () => {
+    const res = await mutate({
+      mutation: UPDATE_CONTACT,
+      variables: {
+        id: 'missing-relationship',
+        contact: {
+          relationshipId: 'e7ce879c-bfdd-4126-b222-9cd5efdba701',
+          email: 'june.dore@example.com',
+          firstname: 'june',
+          lastname: 'dore',
+        },
+      },
+    });
+
+    expect(res.data).toEqual({
+      updateContact: {
+        message: 'The contact with the id "missing-relationship" does not exist.',
+      },
+    });
+  });
+
+  test('no such entity', async () => {
+    const res = await mutate({
+      mutation: UPDATE_CONTACT,
+      variables: {
+        id: '11111111-2222-3333-4444-555555555555',
+        contact: {
+          relationshipId: 'e7ce879c-bfdd-4126-b222-9cd5efdba701',
+          email: 'june.dore@example.com',
+          firstname: 'june',
+          lastname: 'dore',
+        },
+      },
+    });
+
+    expect(res.data).toEqual({
+      updateContact: {
+        message: 'The contact with the id "11111111-2222-3333-4444-555555555555" does not exist.',
       },
     });
   });
@@ -326,36 +283,28 @@ describe('Delete', () => {
     });
   });
 
-  test.skip('invalid input', async () => {
+  test('invalid input', async () => {
     const res = await query({
       query: REMOVE_CONTACT,
       variables: { id: 'missing-contact' },
     });
 
-    expect({
-      code: res.errors[0].extensions.code,
-      validationErrors: res.errors[0].extensions.validationErrors,
-    }).toEqual({
-      code: 'BAD_USER_INPUT',
-      validationErrors: {
-        value: '"value" must be a valid GUID',
+    expect(res.data).toEqual({
+      removeContact: {
+        message: 'The contact with the id "missing-contact" does not exist.',
       },
     });
   });
 
-  test.skip('not such entity', async () => {
+  test('not such entity', async () => {
     const res = await query({
       query: REMOVE_CONTACT,
       variables: { id: '945641cc-f972-4bdc-b7b4-ad449739c0e8' },
     });
 
-    expect({
-      code: res.errors[0].extensions.code,
-      validationErrors: res.errors[0].extensions.validationErrors,
-    }).toEqual({
-      code: 'BAD_USER_INPUT',
-      validationErrors: {
-        value: '"value" must be a valid GUID',
+    expect(res.data).toEqual({
+      removeContact: {
+        message: 'The contact with the id "945641cc-f972-4bdc-b7b4-ad449739c0e8" does not exist.',
       },
     });
   });
