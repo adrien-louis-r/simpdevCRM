@@ -8,9 +8,12 @@ const {
 } = require('./fragments');
 
 const GET_RELATIONSHIP_LIST = gql`
-  {
-    relationshipList {
-      ...RelationshipData
+  query relationshipList($params: PaginationInput) {
+    relationshipList(params: $params) {
+      total
+      items {
+        ...RelationshipData
+      }
     }
   }
   ${RELATIONSHIP_FRAGMENT}

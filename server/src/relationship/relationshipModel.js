@@ -22,8 +22,8 @@ const relationshipValidator = joi.object({
   type: joi.string().valid('business', 'prospect', 'customer').required(),
 });
 
-async function allContact() {
-  return contactRepository.all();
+async function listContact(params) {
+  return contactRepository.list(params);
 }
 
 async function getContact(id) {
@@ -54,8 +54,8 @@ async function removeContact(id) {
   return contactRepository.remove(id);
 }
 
-async function allRelationship() {
-  return relationshipRepository.all();
+async function listRelationship(params) {
+  return relationshipRepository.list(params);
 }
 
 async function getRelationship(id) {
@@ -87,12 +87,12 @@ async function removeRelationship(id) {
 }
 
 module.exports = {
-  allContact,
+  listContact,
   getContact,
   createContact,
   updateContact,
   removeContact,
-  allRelationship,
+  listRelationship,
   getRelationship,
   createRelationship,
   updateRelationship,

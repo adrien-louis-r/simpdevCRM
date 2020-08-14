@@ -59,6 +59,21 @@ const typeDefs = gql`
     message: String!
   }
 
+  type ContactList {
+    total: Int!
+    items: [Contact!]!
+  }
+
+  type RelationshipList {
+    total: Int!
+    items: [Relationship!]!
+  }
+
+  input PaginationInput {
+    size: Int
+    from: Int
+  }
+
   union RelationshipMutationResult = Relationship | BadUserInput
 
   union ContactMutationResult = Contact | BadUserInput
@@ -78,9 +93,9 @@ const typeDefs = gql`
   union DeleteMutationResult = DeleteResult | NotFoundEntity | InvalidParam
 
   type Query {
-    contactList: [Contact!]!
+    contactList(params: PaginationInput): ContactList!
     contact(id: ID!): MandatoryContact!
-    relationshipList: [Relationship!]!
+    relationshipList(params: PaginationInput): RelationshipList!
     relationship(id: ID!): MandatoryRelationship!
   }
 

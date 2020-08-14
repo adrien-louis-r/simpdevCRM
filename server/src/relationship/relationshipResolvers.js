@@ -62,7 +62,7 @@ const handleBadUserInput = (err) => () => {
 
 const resolvers = {
   Query: {
-    relationshipList: () => model.allRelationship(),
+    relationshipList: (_, { params = {} }) => model.listRelationship(params),
     relationship: async (_, { id }) => {
       try {
         const relationship = await model.getRelationship(id);
@@ -77,7 +77,7 @@ const resolvers = {
         ]);
       }
     },
-    contactList: () => model.allContact(),
+    contactList: (_, { params = {} }) => model.listContact(params),
     contact: async (_, { id }) => {
       try {
         const contact = await model.getContact(id);

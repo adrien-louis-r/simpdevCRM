@@ -200,26 +200,80 @@ describe('List', () => {
     const res = await query({ query: GET_CONTACT_LIST });
 
     expect(res.data).toEqual({
-      contactList: [
-        {
-          id: '945641cc-f972-4bdc-b7b4-ad449739c0e9',
-          email: 'jane.doe@example.com',
-          firstname: 'Jane',
-          lastname: 'Doe',
-        },
-        {
-          id: '5f51285e-c510-436b-b06c-a16bec51a92c',
-          email: 'John.Doe@example.com',
-          firstname: 'John',
-          lastname: 'Doe',
-        },
-        {
-          email: 'GoodAcme@example.com',
-          firstname: 'Good',
-          id: 'e64c1b18-7b70-4a76-b733-250abb6238d8',
-          lastname: 'Acme',
-        },
-      ],
+      contactList: {
+        total: 3,
+        items: [
+          {
+            id: '945641cc-f972-4bdc-b7b4-ad449739c0e9',
+            email: 'jane.doe@example.com',
+            firstname: 'Jane',
+            lastname: 'Doe',
+          },
+          {
+            id: '5f51285e-c510-436b-b06c-a16bec51a92c',
+            email: 'John.Doe@example.com',
+            firstname: 'John',
+            lastname: 'Doe',
+          },
+          {
+            email: 'GoodAcme@example.com',
+            firstname: 'Good',
+            id: 'e64c1b18-7b70-4a76-b733-250abb6238d8',
+            lastname: 'Acme',
+          },
+        ],
+      },
+    });
+  });
+
+  test('with size', async () => {
+    const res = await query({ query: GET_CONTACT_LIST, variables: { params: { size: 2 } } });
+
+    expect(res.data).toEqual({
+      contactList: {
+        total: 3,
+        items: [
+          {
+            id: '945641cc-f972-4bdc-b7b4-ad449739c0e9',
+            email: 'jane.doe@example.com',
+            firstname: 'Jane',
+            lastname: 'Doe',
+          },
+          {
+            id: '5f51285e-c510-436b-b06c-a16bec51a92c',
+            email: 'John.Doe@example.com',
+            firstname: 'John',
+            lastname: 'Doe',
+          },
+        ],
+      },
+    });
+  });
+
+  test('with size and from', async () => {
+    const res = await query({
+      query: GET_CONTACT_LIST,
+      variables: { params: { size: 2, from: 1 } },
+    });
+
+    expect(res.data).toEqual({
+      contactList: {
+        total: 3,
+        items: [
+          {
+            id: '5f51285e-c510-436b-b06c-a16bec51a92c',
+            email: 'John.Doe@example.com',
+            firstname: 'John',
+            lastname: 'Doe',
+          },
+          {
+            email: 'GoodAcme@example.com',
+            firstname: 'Good',
+            id: 'e64c1b18-7b70-4a76-b733-250abb6238d8',
+            lastname: 'Acme',
+          },
+        ],
+      },
     });
   });
 });

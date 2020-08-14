@@ -10,9 +10,12 @@ const {
 } = require('./fragments');
 
 const GET_CONTACT_LIST = gql`
-  {
-    contactList {
-      ...ContactData
+  query contact($params: PaginationInput) {
+    contactList(params: $params) {
+      total
+      items {
+        ...ContactData
+      }
     }
   }
   ${CONTACT_FRAGMENT}

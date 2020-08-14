@@ -169,24 +169,75 @@ describe('Update', () => {
 describe('List', () => {
   test('all', async () => {
     const res = await query({ query: GET_RELATIONSHIP_LIST });
+
     expect(res.data).toEqual({
-      relationshipList: [
-        {
-          id: '4d1b5024-e42d-4274-a7c8-d0e979ec9e0e',
-          name: 'Promising contact',
-          type: 'prospect',
-        },
-        {
-          id: 'dbd4666a-92df-47b5-82d3-9163c4875db9',
-          name: 'Nice customer',
-          type: 'customer',
-        },
-        {
-          id: 'e7ce879c-bfdd-4126-b222-9cd5efdba701',
-          name: 'Friendly freelance',
-          type: 'business',
-        },
-      ],
+      relationshipList: {
+        total: 3,
+        items: [
+          {
+            id: '4d1b5024-e42d-4274-a7c8-d0e979ec9e0e',
+            name: 'Promising contact',
+            type: 'prospect',
+          },
+          {
+            id: 'dbd4666a-92df-47b5-82d3-9163c4875db9',
+            name: 'Nice customer',
+            type: 'customer',
+          },
+          {
+            id: 'e7ce879c-bfdd-4126-b222-9cd5efdba701',
+            name: 'Friendly freelance',
+            type: 'business',
+          },
+        ],
+      },
+    });
+  });
+
+  test('with size', async () => {
+    const res = await query({ query: GET_RELATIONSHIP_LIST, variables: { params: { size: 2 } } });
+
+    expect(res.data).toEqual({
+      relationshipList: {
+        total: 3,
+        items: [
+          {
+            id: '4d1b5024-e42d-4274-a7c8-d0e979ec9e0e',
+            name: 'Promising contact',
+            type: 'prospect',
+          },
+          {
+            id: 'dbd4666a-92df-47b5-82d3-9163c4875db9',
+            name: 'Nice customer',
+            type: 'customer',
+          },
+        ],
+      },
+    });
+  });
+
+  test('with size and from', async () => {
+    const res = await query({
+      query: GET_RELATIONSHIP_LIST,
+      variables: { params: { size: 2, from: 1 } },
+    });
+
+    expect(res.data).toEqual({
+      relationshipList: {
+        total: 3,
+        items: [
+          {
+            id: 'dbd4666a-92df-47b5-82d3-9163c4875db9',
+            name: 'Nice customer',
+            type: 'customer',
+          },
+          {
+            id: 'e7ce879c-bfdd-4126-b222-9cd5efdba701',
+            name: 'Friendly freelance',
+            type: 'business',
+          },
+        ],
+      },
     });
   });
 });
