@@ -1,15 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import ApolloClient from "apollo-boost";
-import { ApolloProvider } from "@apollo/react-hooks";
-import "./styles/main.css";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloProvider } from "@apollo/client";
+import "./dist/styles/main.css";
 import { BrowserRouter } from "react-router-dom";
-
+import possibleTypes from "./dist/possibleTypes.json";
 import Layout from "./Layout";
 import * as serviceWorker from "./serviceWorker";
 
 const client = new ApolloClient({
   uri: "http://localhost:4100/graphql",
+  cache: new InMemoryCache({
+    possibleTypes,
+  }),
 });
 
 ReactDOM.render(

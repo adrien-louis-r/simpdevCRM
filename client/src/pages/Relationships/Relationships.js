@@ -2,66 +2,35 @@ import React from "react";
 import {
   Switch,
   Route,
-  Link,
   useParams,
   useRouteMatch,
   useHistory,
+  Redirect,
 } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/react-hooks";
-import { gql } from "apollo-boost";
-
-const RELATIONSHIP_FRAGMENT = gql`
-  fragment RelationshipData on Relationship {
-    id
-    name
-    type
-  }
-`;
-
-const GET_RELATIONSHIP_LIST = gql`
-  {
-    relationshipList {
-      ...RelationshipData
-    }
-  }
-  ${RELATIONSHIP_FRAGMENT}
-`;
-
-const GET_RELATIONSHIP = gql`
-  query relationship($id: ID!) {
-    relationship(id: $id) {
-      ...RelationshipData
-    }
-  }
-  ${RELATIONSHIP_FRAGMENT}
-`;
-
-const ADD_RELATIONSHIP = gql`
-  mutation addRelationship($relationship: RelationshipInput!) {
-    addRelationship(relationship: $relationship) {
-      ...RelationshipData
-      ... on BadUserInput {
-        errors {
-          field
-          message
-        }
-      }
-    }
-  }
-  ${RELATIONSHIP_FRAGMENT}
-`;
-
-const REMOVE_RELATIONSHIP = gql`
-  mutation removeRelationship($id: ID!) {
-    removeRelationship(id: $id) {
-      id
-      success
-    }
-  }
-`;
+import { useQuery, useMutation } from "@apollo/client";
+import {
+  REMOVE_RELATIONSHIP,
+  ADD_RELATIONSHIP,
+  GET_RELATIONSHIP_LIST,
+  GET_RELATIONSHIP,
+} from "./RelationshipsQueries";
+import { H1 } from "../../components/Heading";
+import Link from "../../components/Link";
+import Button from "../../components/Button";
+import FormItem from "../../components/FormItem";
+import Pagination from "../../modules/Pagination";
+import usePagination from "../../hooks/usePagination";
 
 function RelationshipList() {
-  const { loading, error, data } = useQuery(GET_RELATIONSHIP_LIST);
+  const { size, from } = usePagination();
+  const { loading, error, data } = useQuery(GET_RELATIONSHIP_LIST, {
+    variables: {
+      params: {
+        size,
+        from,
+      },
+    },
+  });
   const { url } = useRouteMatch();
   const [
     removeRelationship,
@@ -88,23 +57,46 @@ function RelationshipList() {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error :(</p>;
 
-  return data.relationshipList.map(({ id, name, type }) => (
-    <div key={id}>
-      <p>
-        <Link to={`${url}/${id}`}>
-          {type}: {name}
-        </Link>
-        {mutationLoading ? (
-          <button disabled>Loading...</button>
-        ) : (
-          <button onClick={() => removeRelationship({ variables: { id } })}>
-            Delete
-          </button>
-        )}
-        {mutationError && <p>Error :( Please try again</p>}
-      </p>
+  return (
+    <div>
+      <Pagination total={data.relationshipList.total} size={size} />
+      <table className="table-fixed w-full">
+        <thead>
+          <tr>
+            <th className="w-1/2 px-4 py-2">Name</th>
+            <th className="w-1/4 px-4 py-2">Type</th>
+            <th className="w-1/4 px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.relationshipList.items.map(({ id, name, type }) => (
+            <tr key={id}>
+              <td className="border px-4 py-2">
+                <Link to={`${url}/${id}`}>{name}</Link>
+              </td>
+              <td className="border px-4 py-2 text-center">{type}</td>
+              <td className="border px-4 py-2 text-center">
+                {mutationLoading ? (
+                  <Button importance="tertiary" destructive disabled>
+                    Loading...
+                  </Button>
+                ) : (
+                  <Button
+                    importance="tertiary"
+                    destructive
+                    onClick={() => removeRelationship({ variables: { id } })}
+                  >
+                    Delete
+                  </Button>
+                )}
+                {mutationError && <p>Error :( Please try again</p>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  ));
+  );
 }
 
 function Relationship() {
@@ -116,47 +108,30 @@ function Relationship() {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error :(</p>;
 
-  return data.relationship.email;
-}
-
-function InputGroup({ name, label, value, handler, error }) {
-  const className =
-    "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline";
-  return (
-    <div className="mb-4">
-      <label
-        className="block text-gray-700 text-sm font-bold mb-2"
-        htmlFor={name}
-      >
-        {label}
-      </label>
-      <input
-        className={error ? `${className} border-red-500` : className}
-        type={name}
-        id={name}
-        value={value}
-        onChange={handler}
-      />
-      {error && <p className="text-red-500 text-xs italic">{error}</p>}
-    </div>
-  );
+  if (
+    data.relationship.__typename === "InvalidParam" ||
+    data.relationship.__typename === "NoSuchEntity"
+  ) {
+    return <Redirect to="/404" />;
+  }
+  return data.relationship.name;
 }
 
 function useFormFields(initialValues) {
   const [formFields, setFormFields] = React.useState(initialValues);
   const [formErrors, setFormErrors] = React.useState(initialValues);
 
-  const createChangeHandler = (key) => (e) => {
+  const createChangeHandler = key => e => {
     const value = e.target.value;
-    setFormFields((prev) => ({ ...prev, [key]: value }));
+    setFormFields(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleErrors = (errors) => {
+  const handleErrors = errors => {
     const betterErrors = errors.reduce((acc, error) => {
       acc[error.field] = error.message;
       return acc;
     }, {});
-    errors.forEach((error) => {
+    errors.forEach(error => {
       setFormErrors({
         ...initialValues,
         ...betterErrors,
@@ -204,21 +179,21 @@ export function RelationshipForm() {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     addRelationship({ variables: { relationship: formFields } });
   };
 
   return (
     <form className="w-full max-w-xs" onSubmit={handleSubmit}>
-      <InputGroup
+      <FormItem
         name="name"
         label="Name"
         value={formFields.name}
         error={formErrors.name}
         handler={createChangeHandler("name")}
       />
-      <InputGroup
+      <FormItem
         name="type"
         label="Type"
         value={formFields.type}
@@ -237,14 +212,18 @@ export function RelationshipForm() {
   );
 }
 
-export default function Relationships() {
+export default function RelationshipsRelationships() {
   const { path } = useRouteMatch();
 
   return (
-    <div>
-      <div className="flex justify-between items-center">
-        <h1 className="h1 mb-2">Relationship management</h1>
-        <Link className="btn btn-secondary" to={`${path}/new`}>
+    <div className="container">
+      <div className="flex items-center my-12">
+        <H1>Relationship management</H1>
+        <Link
+          buttonAppearance
+          className="ml-auto flex-shrink-0"
+          to={`${path}/new`}
+        >
           Create new relationship
         </Link>
       </div>

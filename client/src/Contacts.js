@@ -7,8 +7,8 @@ import {
   useRouteMatch,
   useHistory,
 } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/react-hooks";
-import { gql } from "apollo-boost";
+import { useQuery, useMutation } from "@apollo/react";
+import { gql } from "@apollo/client";
 
 const CONTACT_FRAGMENT = gql`
   fragment ContactData on Contact {
@@ -142,13 +142,13 @@ function useFormFields(initialValues) {
   const [formFields, setFormFields] = React.useState(initialValues);
   const [formErrors, setFormErrors] = React.useState(initialValues);
 
-  const createChangeHandler = (key) => (e) => {
+  const createChangeHandler = key => e => {
     const value = e.target.value;
-    setFormFields((prev) => ({ ...prev, [key]: value }));
+    setFormFields(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleErrors = (error) => {
-    error.graphQLErrors.forEach((graphQLError) => {
+  const handleErrors = error => {
+    error.graphQLErrors.forEach(graphQLError => {
       if (graphQLError.extensions.code === "BAD_USER_INPUT") {
         setFormErrors({
           ...initialValues,
@@ -192,7 +192,7 @@ export function ContactForm() {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     addContact({ variables: { contact: formFields } });
   };
