@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 const server = require('./makeApolloServer');
+require('./scripts/fetchPossibleTypes');
 
 const app = express();
 app.use(cors());
