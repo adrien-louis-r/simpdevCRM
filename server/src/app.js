@@ -4,7 +4,11 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 const server = require('./makeApolloServer');
-require('./scripts/fetchPossibleTypes');
+
+if (process.env.NODE_ENV === 'development') {
+  // eslint-disable-next-line
+  require('../../client/src/scripts/fetchPossibleTypes');
+}
 
 const app = express();
 app.use(cors());

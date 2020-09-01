@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon --watch src ./bin/www",
+    "start": "NODE_ENV=development nodemon --watch src ./bin/www",
     "knex": "knex",
     "jest": "jest",
     "test": "jest --runInBand --verbose",
@@ -18,7 +18,6 @@
     "apollo-server-express": "^2.15.0",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
-    "cross-fetch": "^3.0.5",
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "faker": "^4.1.0",

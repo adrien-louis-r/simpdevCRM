@@ -22,7 +22,7 @@ import Pagination from "../../modules/Pagination";
 import usePagination from "../../hooks/usePagination";
 
 function RelationshipList() {
-  const { size, from } = usePagination();
+  const { size, from, pageCount, prev, next } = usePagination();
   const { loading, error, data } = useQuery(GET_RELATIONSHIP_LIST, {
     variables: {
       params: {
@@ -59,7 +59,12 @@ function RelationshipList() {
 
   return (
     <div>
-      <Pagination total={data.relationshipList.total} size={size} />
+      <Pagination
+        total={data.relationshipList.total}
+        pageCount={pageCount(data.relationshipList.total)}
+        prev={prev}
+        next={next}
+      />
       <table className="table-fixed w-full">
         <thead>
           <tr>
@@ -110,7 +115,7 @@ function Relationship() {
 
   if (
     data.relationship.__typename === "InvalidParam" ||
-    data.relationship.__typename === "NoSuchEntity"
+    data.relationship.__typename === "NotFoundEntity"
   ) {
     return <Redirect to="/404" />;
   }
