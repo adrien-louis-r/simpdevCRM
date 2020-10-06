@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const debug = require('debug')('pouetcrm:server');
+const debug = require('debug')('simpdevcrm:server');
 const http = require('http');
 const app = require('../src/app');
 

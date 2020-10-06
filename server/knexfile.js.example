@@ -4,7 +4,7 @@ module.exports = {
     connection: {
       host: '127.0.0.1',
       user: 'postgres',
-      password: 'postgres',
+      password: 'password',
       database: 'crm_test',
     },
     seeds: {
@@ -19,8 +19,8 @@ module.exports = {
     connection: {
       host: '127.0.0.1',
       user: 'postgres',
-      password: 'postgres',
-      database: 'crm',
+      password: 'password',
+      database: 'crm_dev',
     },
     seeds: {
       directory: './db/dev-seeds',
